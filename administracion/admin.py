@@ -7,7 +7,7 @@ from .AccionesOrden import *
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('NOMBRE_Y_APELLIDO','EMAIL','TELEFONO','PEDIDOS_TOTALES','FECHA_PROXIMA_ENTREGA',)
+    list_display = ('NOMBRE_Y_APELLIDO','DIRECCION','EMAIL','TELEFONO','PEDIDOS_ENTREGADOS','PEDIDOS_PENDIENTES','PEDIDOS_TOTALES','FECHA_PROXIMA_ENTREGA',)
     exclude = ('PEDIDOS_TOTALES','PEDIDOS_ENTREGADOS','PEDIDOS_PENDIENTES',)
     readonly_fields = ('FECHA_PROXIMA_ENTREGA',)
 
@@ -74,12 +74,16 @@ class OrdenAdminAdmin(admin.ModelAdmin):
     RecetaOrdenInline,
     ]
 
-    list_display = ('estado','cliente','Total_Pedido','Pendiente_de_pago','fecha_entrega','aclaraciones',)
+    list_display = ('orden','estado','cliente','Total_Pedido','Pendiente_de_pago','fecha_entrega','aclaraciones',)
     readonly_fields=('Total_Pedido','Pendiente_de_pago','Anticipo','estado',)
     ordering=('fecha_entrega',)
     exclude=('adelanto','fecha_creacion','estado','debe',)
     list_filter = (FechaEntregaFilter, 'estado', )
     actions=[actualizar_costos_articulos_orden,Iniciar_Pedido,Terminar_Pedido,Cancelar_Pedido,Entregar_Pedido,]
+
+    def orden(self, obj): 
+        return obj.id
+
 
     def Pendiente_de_pago(self, obj): 
         formateo = "💲{:,.2f}".format(obj.debe)
@@ -109,7 +113,7 @@ class OrdenAdminAdmin(admin.ModelAdmin):
 
 @admin.register(Pago)
 class PagoAdmin(admin.ModelAdmin):
-    list_display = ('fecha','cliente','orden_asociada','Pago','Total_Orden','Restante',)
+    list_display = ('fecha','cliente','orden_asociada','Pago','Total_Orden','Deuda_Actualizada',)
     ordering = ('fecha',)
     exclude=('total_orden','deuda_pendiente','fecha_vencimiento',)
     search_fields = ('cliente',)
@@ -124,7 +128,7 @@ class PagoAdmin(admin.ModelAdmin):
         formateo = "💲{:,.2f}".format(obj.total_orden)
         return formateo
     
-    def Restante(self, obj):    
+    def Deuda_Actualizada(self, obj):    
         formateo = "💲{:,.2f}".format(obj.deuda_pendiente)
         return formateo
     

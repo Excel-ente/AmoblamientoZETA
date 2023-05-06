@@ -1,15 +1,19 @@
-from .models import Orden
+from .models import Orden,Actualizar_Pagos_Ordenes
 from django.contrib import admin
 from django.contrib import messages
 
 @admin.action(description="Actualizar Pedidos Sin Entregar")
-def actualizar_costos_articulos_orden(modeladmin, request, queryset):
-    
-    pedidos = Orden.objects.all()   
-
+def actualizar_costos_articulos_orden(self, request, queryset):
+    # Filtrar los pedidos que no han sido entregados
+    pedidos = queryset.exclude(estado__ESTADO="Entregado")
     for pedido in pedidos:
-
+        for articulo in pedido.articuloorden_set.all():
+            articulo.save()
+        
+        pedido.debe = pedido.total - pedido.adelanto
         pedido.save()
+    self.message_user(request, f"{len(pedidos)} pedidos actualizados exitosamente.")
+            
 
 
 

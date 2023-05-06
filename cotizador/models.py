@@ -30,6 +30,10 @@ class Insumo(models.Model):
     UNIDAD_MEDIDA_USO = models.CharField(max_length=10, choices=UnidadDeMedidaSalida, default="Unidades", null=False, blank=False)
     COSTO_UNITARIO = models.DecimalField(max_digits=20, decimal_places=2, default=0, blank=False, null=False)
 
+    class Meta:
+        verbose_name = 'Material'
+        verbose_name_plural ='Materiales' 
+
     def __str__(self):
         return self.PRODUCTO
 
@@ -65,7 +69,7 @@ class Receta(models.Model):
     DETALLE=models.CharField(max_length=120,null=True,blank=True) 
     COSTO_RECETA = models.DecimalField(max_digits=22,decimal_places=3,default=0,blank=True,null=True)
     GASTOS_ADICIONALES = models.DecimalField(max_digits=22,decimal_places=2,default=0,blank=True,null=True)
-    RENTABILIDAD = models.DecimalField(max_digits=5,decimal_places=2,default=0,blank=True,null=True)
+    RENTABILIDAD = models.DecimalField(max_digits=12,decimal_places=2,default=0,blank=True,null=True)
     PRECIO_VENTA = models.DecimalField(max_digits=22,decimal_places=2,default=1,blank=False,null=False)
     INGREDIENTES = models.ManyToManyField(Insumo)
     COSTO_FINAL = models.DecimalField(max_digits=22,decimal_places=2,default=0,blank=True,null=True)
@@ -75,8 +79,8 @@ class Receta(models.Model):
         return self.NOMBRE
 
     class Meta:
-        verbose_name = 'Nuevo Producto'
-        verbose_name_plural ='Lista de Precios' 
+        verbose_name = 'Presupuesto'
+        verbose_name_plural ='Presupuestos' 
 
     def save(self, *args, **kwargs):
         

@@ -5,6 +5,7 @@ from django.forms import ValidationError
 from cotizador.models import Receta
 from django.db.models import Q
 from django.contrib import messages
+from django.contrib import admin
 
 
 class Estado(models.Model):
@@ -13,12 +14,12 @@ class Estado(models.Model):
     def __str__(self):
         return self.ESTADO
 
-
 class Cliente(models.Model):
     NUMERO_CLIENTE= models.AutoField(primary_key=True)
     NOMBRE_Y_APELLIDO=models.CharField(max_length=120,null=False,blank=False)
+    DIRECCION=models.CharField(max_length=255,null=False,blank=False)
     EMAIL=models.CharField(max_length=120,null=True,blank=True)
-    TELEFONO =models.CharField(max_length=15,null=True,blank=True)
+    TELEFONO =models.CharField(max_length=15,null=False,blank=False)
     PEDIDOS_TOTALES = models.IntegerField(default=0,blank=True,null=True)
     PEDIDOS_ENTREGADOS = models.IntegerField(default=0,blank=True,null=True)
     PEDIDOS_PENDIENTES = models.IntegerField(default=0,blank=True,null=True)
@@ -98,7 +99,6 @@ class Orden(models.Model):
 
         super().save(*args, **kwargs)
 
-    
 
     class Meta:
         verbose_name = 'Pedido'
@@ -135,10 +135,6 @@ class ArticuloOrden(models.Model):
         self.precio = self.receta.PRECIO_VENTA
         self.fecha_ultimo_costo = self.receta.ULTIMA_ACTUALIZACION
         self.subtotal = self.precio * self.cantidad
-        print(self.precio)
-        print(self.costo_receta)
-        print(self.cantidad)
-        print(self.fecha_ultimo_costo)
         self.ganancia = self.cantidad * (self.precio - self.costo_receta)
 
         super().save(*args, **kwargs)
@@ -156,14 +152,30 @@ class Pago(models.Model):
     )
     total_orden = models.DecimalField(max_digits=20, decimal_places=2, default=0, null=True, blank=True)
     pago = models.DecimalField(max_digits=20, decimal_places=2, null=False, blank=False)
-    deuda_pendiente = models.DecimalField(max_digits=20, decimal_places=2, default=0, null=True, blank=True)
+    deuda_pendiente = models.DecimalField(verbose_name="deuda actual",max_digits=20, decimal_places=2, default=0, null=True, blank=True)
     fecha_vencimiento = models.DateField(default=datetime.datetime.now,null=True, blank=True)
 
+    def clean(self):
+
+
+        if self.pago <= 0:
+            raise ValidationError("El pago no puede ser menor a $ 0 .-")
+
+        Deuda = 0
+        Deuda = self.orden_asociada.debe
+        
+        print(Deuda)
+
+        if self.pago > Deuda:
+            raise ValidationError("El pago no puede ser superior al total restante de la orden.")
+
+        return super().clean()
+    
     def save(self, *args, **kwargs):
 
         self.total_orden = self.orden_asociada.total
 
-        self.deuda_pendiente = self.total_orden - self.pago
+        self.deuda_pendiente = self.orden_asociada.debe - self.pago
         
         super(Pago, self).save(*args, **kwargs)
         Actualizar_Pagos_Ordenes()
@@ -185,22 +197,25 @@ def Actualizar_Pagos_Ordenes():
     for pago in Orden.objects.all():
 
         monto = 0
+        
+        if pago.estado == "Entregado":
+            pass
+        else:
+            for x in Pago.objects.all():
 
-        for x in Pago.objects.all():
+                if x.orden_asociada.pk == pago.pk:
+                    monto += x.pago
 
-            if x.orden_asociada.pk == pago.pk:
-                monto += x.pago
+            pago.adelanto = monto
 
-        pago.adelanto = monto
+            pago.debe = pago.total - pago.adelanto
 
-        pago.debe = pago.total - pago.adelanto
+            deuda = pago.debe
 
-        deuda = pago.debe
+            if deuda <= 0:
+                pago.estado==3
 
-        if deuda <= 0:
-            pago.estado==3
-
-        pago.save()
+            pago.save()
 
 
 class Gasto(models.Model):
