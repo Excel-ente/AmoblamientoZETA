@@ -21,7 +21,7 @@ UnidadDeMedidaSalida = [
 ]
 
 class Insumo(models.Model):
-    PRODUCTO = models.CharField(max_length=120, null=False, blank=False)
+    PRODUCTO = models.CharField(max_length=120, null=False, blank=False,unique=True)
     DETALLE = models.TextField(null=True, blank=True)
     STOCK = models.IntegerField(default=0,null=True,blank=True)
     UNIDAD_MEDIDA_COMPRA = models.CharField(max_length=10, choices=UnidadDeMedida, default="Unidades", null=False, blank=False)
